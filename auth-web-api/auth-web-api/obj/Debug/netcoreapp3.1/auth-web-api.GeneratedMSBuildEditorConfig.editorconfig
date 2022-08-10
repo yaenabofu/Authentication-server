@@ -1,0 +1,3 @@
+is_global = true
+build_property.RootNamespace = auth_web_api
+build_property.ProjectDir = D:\Authentication-server\auth-web-api\auth-web-api\

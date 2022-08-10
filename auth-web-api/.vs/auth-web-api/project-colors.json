@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "ddcc5660-c0ea-43db-a373-332a00761232": {
+      "ProjectGuid": "ddcc5660-c0ea-43db-a373-332a00761232",
+      "DisplayName": "auth-web-api",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
