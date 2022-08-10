@@ -1,7 +1,12 @@
+using auth_web_api.Models.DatabaseObjects;
+using auth_web_api.Repositories.Passwordhashers;
+using auth_web_api.Repositories.Passwordhashers.HmasShaRepository;
+using auth_web_api.Repositories.UserRepository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,6 +40,10 @@ namespace auth_web_api
                     Title = "ENAZA-Web-Api",
                 });
             });
+
+            services.AddDbContext<DatabaseContext>(option => option.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddScoped<IPasswordHasher, HMACSHA256Repository>();
+            services.AddScoped<IUserRepository, UserRepository>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
