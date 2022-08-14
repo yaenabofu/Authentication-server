@@ -89,3 +89,4 @@ D:\Authentication-server\auth-web-api\auth-web-api\bin\Debug\netcoreapp3.1\runti
 D:\Authentication-server\auth-web-api\auth-web-api\bin\Debug\netcoreapp3.1\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.pdb
 D:\Authentication-server\auth-web-api\auth-web-api\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Runtime.Caching.dll
 D:\Authentication-server\auth-web-api\auth-web-api\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
+D:\Authentication-server\auth-web-api\auth-web-api\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Authentication.JwtBearer.dll

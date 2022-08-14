@@ -1,7 +1,10 @@
+using auth_web_api.Models;
 using auth_web_api.Models.DatabaseObjects;
 using auth_web_api.Repositories.Passwordhashers;
 using auth_web_api.Repositories.Passwordhashers.HmasShaRepository;
+using auth_web_api.Repositories.TokenGenerators;
 using auth_web_api.Repositories.UserRepository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -11,22 +14,23 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace auth_web_api
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -41,7 +45,27 @@ namespace auth_web_api
                 });
             });
 
-            services.AddDbContext<DatabaseContext>(option => option.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            AuthenticationConfiguration authenticationConfiguration = new AuthenticationConfiguration();
+            services.AddSingleton(authenticationConfiguration);
+            _configuration.Bind("Authentication", authenticationConfiguration);
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o =>
+            {
+                o.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authenticationConfiguration.AccessTokenSecret)),
+                    ValidIssuer = authenticationConfiguration.Issuer,
+                    ValidAudience = authenticationConfiguration.Audience,
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+            services.AddSingleton<AccessTokenGenerator>();
+            services.AddDbContext<DatabaseContext>(option => option.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<IPasswordHasher, HMACSHA256Repository>();
             services.AddScoped<IUserRepository, UserRepository>();
         }
@@ -64,6 +88,7 @@ namespace auth_web_api
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

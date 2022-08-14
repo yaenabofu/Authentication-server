@@ -4,7 +4,7 @@ using System.Text;
 
 namespace auth_web_api.Repositories.Passwordhashers.HmasShaRepository
 {
-    public class HMACSHA256Repository : IPasswordHasher 
+    public class HMACSHA256Repository : IPasswordHasher
     {
         public string Hash(string password)
         {
@@ -18,6 +18,18 @@ namespace auth_web_api.Repositories.Passwordhashers.HmasShaRepository
                numBytesRequested: 256 / 8));
 
             return hashedPassword;
+        }
+
+        public bool VerifyPassword(string givenPassword, string actualPasswordHash)
+        {
+            string hashOfGivenPassword = Hash(givenPassword);
+
+            if (actualPasswordHash == hashOfGivenPassword)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
