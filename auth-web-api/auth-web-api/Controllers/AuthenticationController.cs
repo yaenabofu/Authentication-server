@@ -7,9 +7,12 @@ using auth_web_api.Repositories.RefreshTokenRepository;
 using auth_web_api.Repositories.TokenGenerators;
 using auth_web_api.Repositories.TokenValidators;
 using auth_web_api.Repositories.UserRepository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace auth_web_api.Controllers
@@ -94,7 +97,7 @@ namespace auth_web_api.Controllers
                 return NotFound(new ErrorResponse("Invalid refresh token"));
             }
 
-            await refreshTokenRepository.Delete(refreshToken.Id);
+            await refreshTokenRepository.DeleteById(refreshToken.Id);
 
             User user = await userRepository.GetById(refreshToken.UserId);
 
@@ -106,6 +109,24 @@ namespace auth_web_api.Controllers
             AuthenticatedUserResponse authenticatedUserResponse = await authenticator.Authenticate(user);
 
             return Ok(authenticatedUserResponse);
+        }
+
+        [Authorize]
+        [HttpDelete("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            string rawUserGuid = HttpContext.User.FindFirstValue("id");
+
+            bool isParsed = Guid.TryParse(rawUserGuid, out Guid userGuid);
+
+            if (!isParsed)
+            {
+                return Unauthorized();
+            }
+
+            await refreshTokenRepository.DeleteByUserId(userGuid);
+
+            return NoContent();
         }
 
         [HttpPost("login")]

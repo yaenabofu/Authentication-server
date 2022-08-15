@@ -21,9 +21,17 @@ namespace auth_web_api.Repositories.RefreshTokenRepository
             await databaseContext.SaveChangesAsync();
         }
 
-        public async Task Delete(Guid id)
+        public async Task DeleteById(Guid id)
         {
             RefreshToken refreshToken = await databaseContext.RefreshTokens.FirstOrDefaultAsync(c => c.Id == id);
+
+            databaseContext.RefreshTokens.Remove(refreshToken);
+            await databaseContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteByUserId(Guid userId)
+        {
+            RefreshToken refreshToken = await databaseContext.RefreshTokens.FirstOrDefaultAsync(c => c.UserId == userId);
 
             databaseContext.RefreshTokens.Remove(refreshToken);
             await databaseContext.SaveChangesAsync();

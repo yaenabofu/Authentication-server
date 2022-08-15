@@ -8,6 +8,7 @@ namespace auth_web_api.Repositories.RefreshTokenRepository
     {
         Task<RefreshToken> GetByToken(string token);
         Task Create(RefreshToken refreshToken);
-        Task Delete(Guid id);
+        Task DeleteById(Guid id);
+        Task DeleteByUserId(Guid userId);
     }
 }
