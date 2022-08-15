@@ -1,8 +1,11 @@
 ﻿using auth_web_api.Models.DatabaseObjects;
 using auth_web_api.Models.Requests;
 using auth_web_api.Models.Responses;
+using auth_web_api.Repositories.Authenticators;
 using auth_web_api.Repositories.Passwordhashers;
+using auth_web_api.Repositories.RefreshTokenRepository;
 using auth_web_api.Repositories.TokenGenerators;
+using auth_web_api.Repositories.TokenValidators;
 using auth_web_api.Repositories.UserRepository;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -15,13 +18,18 @@ namespace auth_web_api.Controllers
     {
         private readonly IUserRepository userRepository;
         private readonly IPasswordHasher passwordHasher;
-        private readonly AccessTokenGenerator accessTokenGenerator;
+        private readonly RefreshTokenValidator refreshTokenValidator;
+        private readonly IRefreshTokenRepository refreshTokenRepository;
+        private readonly Authenticator authenticator;
+
         public AuthenticationController(IUserRepository userRepository, IPasswordHasher passwordHasher,
-            AccessTokenGenerator accessTokenGenerator)
+            RefreshTokenValidator refreshTokenValidator, IRefreshTokenRepository refreshTokenRepository, Authenticator authenticator)
         {
-            this.accessTokenGenerator = accessTokenGenerator;
             this.userRepository = userRepository;
             this.passwordHasher = passwordHasher;
+            this.refreshTokenValidator = refreshTokenValidator;
+            this.refreshTokenRepository = refreshTokenRepository;
+            this.authenticator = authenticator;
         }
 
         [HttpPost("register")]
@@ -65,6 +73,41 @@ namespace auth_web_api.Controllers
             return Ok();
         }
 
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequestModelState();
+            }
+
+            bool isValidRefreshToken = refreshTokenValidator.Validate(refreshRequest.RefreshToken);
+
+            if (!isValidRefreshToken)
+            {
+                return BadRequest(new ErrorResponse("Refresh token is invalid"));
+            }
+
+            RefreshToken refreshToken = await refreshTokenRepository.GetByToken(refreshRequest.RefreshToken);
+            if (refreshToken == null)
+            {
+                return NotFound(new ErrorResponse("Invalid refresh token"));
+            }
+
+            await refreshTokenRepository.Delete(refreshToken.Id);
+
+            User user = await userRepository.GetById(refreshToken.UserId);
+
+            if (user == null)
+            {
+                return NotFound(new ErrorResponse("User not found"));
+            }
+
+            AuthenticatedUserResponse authenticatedUserResponse = await authenticator.Authenticate(user);
+
+            return Ok(authenticatedUserResponse);
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
@@ -88,12 +131,9 @@ namespace auth_web_api.Controllers
                 return Unauthorized();
             }
 
-            string accessToken = accessTokenGenerator.GenerateToken(userByLogin);
+            AuthenticatedUserResponse authenticatedUserResponse = await authenticator.Authenticate(userByLogin);
 
-            return Ok(new AuthenticatedUserResponse()
-            {
-                AccessToken = accessToken
-            });
+            return Ok(authenticatedUserResponse);
         }
 
         private IActionResult BadRequestModelState()

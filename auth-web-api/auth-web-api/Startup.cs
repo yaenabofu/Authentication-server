@@ -1,8 +1,11 @@
 using auth_web_api.Models;
 using auth_web_api.Models.DatabaseObjects;
+using auth_web_api.Repositories.Authenticators;
 using auth_web_api.Repositories.Passwordhashers;
 using auth_web_api.Repositories.Passwordhashers.HmasShaRepository;
+using auth_web_api.Repositories.RefreshTokenRepository;
 using auth_web_api.Repositories.TokenGenerators;
+using auth_web_api.Repositories.TokenValidators;
 using auth_web_api.Repositories.UserRepository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -50,6 +53,9 @@ namespace auth_web_api
             services.AddSingleton(authenticationConfiguration);
             _configuration.Bind("Authentication", authenticationConfiguration);
 
+            services.AddSingleton<RefreshTokenGenerator>();
+            services.AddSingleton<RefreshTokenValidator>();
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o =>
             {
                 o.TokenValidationParameters = new TokenValidationParameters()
@@ -64,8 +70,14 @@ namespace auth_web_api
                 };
             });
 
-            services.AddSingleton<AccessTokenGenerator>();
             services.AddDbContext<DatabaseContext>(option => option.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddSingleton<AccessTokenGenerator>();
+            services.AddSingleton<RefreshTokenGenerator>();
+            services.AddSingleton<RefreshTokenValidator>();
+            services.AddScoped<Authenticator>();
+            services.AddSingleton<TokenGenerator>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IPasswordHasher, HMACSHA256Repository>();
             services.AddScoped<IUserRepository, UserRepository>();
         }

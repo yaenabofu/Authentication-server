@@ -10,5 +10,6 @@ namespace auth_web_api.Models.DatabaseObjects
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

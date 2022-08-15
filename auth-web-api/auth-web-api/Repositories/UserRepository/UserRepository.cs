@@ -34,6 +34,13 @@ namespace auth_web_api.Repositories.UserRepository
             return userByEmail;
         }
 
+        public async Task<User> GetById(Guid userId)
+        {
+            User userById = await databaseContext.Users.FirstOrDefaultAsync(c => c.Id == userId);
+
+            return userById;
+        }
+
         public async Task<User> GetByLogin(string login)
         {
             User userByLogin = await databaseContext.Users.FirstOrDefaultAsync(c => c.Login == login);
